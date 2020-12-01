@@ -55,12 +55,27 @@ def get_args():
     return parser.parse_args()
 
 
+# Builds a vocabulary out of the data dictionary, along with a frequency count for each word. 
+# Assumes data is a list of dictionaries that containt "text" entry.
+def build_vocabulary(data):
+    vocab = {}
+    
+    for row in data:
+        for word in row["text"].split():
+            if word not in vocab:
+                vocab.update({word:1})
+            else:
+                vocab[word] += 1
+
+
 
 def run():
     args = get_args()
 
     train_set = read_data(data_folder / args.train, to_dict=True)
     test_set = read_data(data_folder / args.test)
+
+    build_vocabulary(train_set)
 
 if __name__ == "__main__":
     run()
