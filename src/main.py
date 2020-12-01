@@ -4,6 +4,7 @@
 
 import argparse
 import csv
+import string
 from pathlib import Path
 
 #external dependencies
@@ -51,16 +52,27 @@ def get_args():
 
 # Builds a vocabulary out of the data dictionary, along with a frequency count for each word. 
 # Assumes data is a list of dictionaries that containt "text" entry.
-#NOTE: need to "clean" the words of any punctionation
-def build_vocabulary(data):
+# Vocabulary can be filtered: entries with a frequency less than 2 are removed.
+#NOTE: need to "clean" the words of any punctuation
+#NOTE: no smoothing yet
+def build_vocabulary(data, filter_vocab=False, smooth=0.01):
     vocab = {}
     
     for row in data:
-        for word in row["text"].split():
+        for word in row["text"].lower().split():
             if word not in vocab:
                 vocab.update({word:1})
             else:
                 vocab[word] += 1
+
+    if filter_vocab:
+        filtered_vocab = {}
+
+        for word in vocab:
+            if vocab[word] >= 2:
+                filtered_vocab.update({word:vocab[word]})
+
+        vocab = filtered_vocab
 
     return vocab
 
@@ -74,6 +86,9 @@ def run():
 
     train_vocab = build_vocabulary(train_set)
     test_vocab = build_vocabulary(test_set)
+
+    train_vocab_filtered = build_vocabulary(train_set, True)
+    test_vocab_filtered = build_vocabulary(test_set, True)
 
     #for k,v in train_vocab.items():
     #    print(k, "\t", str(v))
