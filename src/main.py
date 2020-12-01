@@ -12,23 +12,17 @@ from pathlib import Path
 
 data_folder = Path("../data/")
 
-#Reads the passed delimieter seperated file to a list of rows. 
-#If specified, will output a list of dictionaries (useful for training set)
-def read_data(file, to_dict=False, delim='\t'):
+#Reads the passed delimieter seperated file to a list of dictionaries with keys as col_names. 
+def read_data(file, delim='\t', col_names=None):
     result = []
 
     with open(file, encoding='utf-8') as f:
-        if to_dict:
-            reader = csv.DictReader(f, delimiter=delim)
-        else:
-            reader = csv.reader(f, delimiter=delim)
+        reader = csv.DictReader(f, delimiter=delim, fieldnames=col_names)
 
         for row in reader:
             result.append(row)
 
     return result
-
-
 
 #numpy really doesnt like the tsv files we have :(
 #it's not using the delimiter properly even though it is clearly defined
@@ -57,6 +51,7 @@ def get_args():
 
 # Builds a vocabulary out of the data dictionary, along with a frequency count for each word. 
 # Assumes data is a list of dictionaries that containt "text" entry.
+#NOTE: need to "clean" the words of any punctionation
 def build_vocabulary(data):
     vocab = {}
     
@@ -67,15 +62,27 @@ def build_vocabulary(data):
             else:
                 vocab[word] += 1
 
+    return vocab
+
 
 
 def run():
     args = get_args()
 
-    train_set = read_data(data_folder / args.train, to_dict=True)
-    test_set = read_data(data_folder / args.test)
+    train_set = read_data(data_folder / args.train)
+    test_set = read_data(data_folder / args.test, col_names=("tweet_id", "text"))
 
-    build_vocabulary(train_set)
+    train_vocab = build_vocabulary(train_set)
+    test_vocab = build_vocabulary(test_set)
+
+    #for k,v in train_vocab.items():
+    #    print(k, "\t", str(v))
+
+    #print("============================")
+
+    #for k,v in test_vocab.items():
+    #    print(k, "\t", str(v))
+
 
 if __name__ == "__main__":
     run()
