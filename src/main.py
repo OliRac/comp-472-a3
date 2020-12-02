@@ -90,6 +90,8 @@ def run():
     train_vocab_filtered = build_vocabulary(train_set, True)
     test_vocab_filtered = build_vocabulary(test_set, True)
 
+    #use the words as features and word frequencies as feature values
+
     #for k,v in train_vocab.items():
     #    print(k, "\t", str(v))
 
