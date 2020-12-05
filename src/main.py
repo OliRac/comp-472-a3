@@ -6,6 +6,7 @@ import argparse
 import csv
 import string
 from pathlib import Path
+from math import log10
 
 #external dependencies
 #import numpy as np
@@ -55,7 +56,7 @@ def get_args():
 # Vocabulary can be filtered: entries with a frequency less than 2 are removed.
 #NOTE: need to "clean" the words of any punctuation
 #NOTE: no smoothing yet
-def build_vocabulary(data, filter_vocab=False, smooth=0.01):
+def build_vocabulary(data, filter_vocab=False):
     vocab = {}
     
     for row in data:
@@ -76,6 +77,32 @@ def build_vocabulary(data, filter_vocab=False, smooth=0.01):
 
     return vocab
 
+#Returns the conditional in log10, p(x) = (count(x) + smmoth) /  (count(all words) + size_of_vocab*smooth)
+#Assumes vocab contains the frequency of each word
+def calc_conditionals(vocab, smooth=0.01):
+    condi = dict.fromkeys(vocab.keys())
+
+    word_count = sum(vocab.values())
+
+    for word in condi:
+        condi[word] = log10((vocab[word] + smooth) / (word_count + len(vocab)*smooth))
+
+    return condi
+
+
+#Returns the priors for the given dataset and label in log10
+#Label defaults to "q1_label" as per the assignment guidelines
+#Does not handle div by 0 or log(0)
+def calc_priors(dataset, label="q1_label"):
+    denominator = len(dataset)
+
+    numerator = 0
+
+    for row in dataset:
+        if row[label] == "yes":
+            numerator += 1
+
+    return log10(numerator / denominator)
 
 
 def run():
@@ -84,21 +111,19 @@ def run():
     train_set = read_data(data_folder / args.train)
     test_set = read_data(data_folder / args.test, col_names=("tweet_id", "text"))
 
+    #Training
     train_vocab = build_vocabulary(train_set)
-    test_vocab = build_vocabulary(test_set)
-
     train_vocab_filtered = build_vocabulary(train_set, True)
+
+    train_conditionals = calc_conditionals(train_vocab)
+    train_conditionals_filtered = calc_conditionals(train_vocab_filtered)
+
+    train_priors = calc_priors(train_set)
+    
+
+    #Testing
+    test_vocab = build_vocabulary(test_set)
     test_vocab_filtered = build_vocabulary(test_set, True)
-
-    #use the words as features and word frequencies as feature values
-
-    #for k,v in train_vocab.items():
-    #    print(k, "\t", str(v))
-
-    #print("============================")
-
-    #for k,v in test_vocab.items():
-    #    print(k, "\t", str(v))
 
 
 if __name__ == "__main__":
