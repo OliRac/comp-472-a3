@@ -51,20 +51,20 @@ def get_args():
     return parser.parse_args()
 
 
-# Builds a vocabulary out of the data dictionary, along with a frequency count for each word. 
+# Builds a vocabulary out of the data dictionary for label "label_name" with value "label_value", along with a frequency count for each word. 
 # Assumes data is a list of dictionaries that containt "text" entry.
 # Vocabulary can be filtered: entries with a frequency less than 2 are removed.
-#NOTE: need to "clean" the words of any punctuation
-#NOTE: no smoothing yet
-def build_vocabulary(data, filter_vocab=False):
+# No need to clean the words
+def build_vocabulary(data, label_name="q1_label", label_value="yes", filter_vocab=False):
     vocab = {}
     
     for row in data:
-        for word in row["text"].lower().split():
-            if word not in vocab:
-                vocab.update({word:1})
-            else:
-                vocab[word] += 1
+        if row[label_name] == label_value:
+            for word in row["text"].lower().split():
+                if word not in vocab:
+                    vocab.update({word:1})
+                else:
+                    vocab[word] += 1
 
     if filter_vocab:
         filtered_vocab = {}
@@ -77,7 +77,8 @@ def build_vocabulary(data, filter_vocab=False):
 
     return vocab
 
-#Returns the conditional in log10, p(x) = (count(x) + smmoth) /  (count(all words) + size_of_vocab*smooth)
+
+#Returns the conditional in log10, p(x) = (count(x) + smooth) /  (count(all words) + size_of_vocab*smooth)
 #Assumes vocab contains the frequency of each word
 def calc_conditionals(vocab, smooth=0.01):
     condi = dict.fromkeys(vocab.keys())
@@ -91,7 +92,7 @@ def calc_conditionals(vocab, smooth=0.01):
 
 
 #Returns the priors for the given dataset and label in log10
-#Label defaults to "q1_label" as per the assignment guidelines
+#Label defaults to "q1_label" and label_value to "yes" as per the assignment guidelines
 #Does not handle div by 0 or log(0)
 def calc_priors(dataset, label_name="q1_label", label_value="yes"):
     denominator = len(dataset)
@@ -112,18 +113,17 @@ def run():
     test_set = read_data(data_folder / args.test, col_names=("tweet_id", "text", "q1_label"))
 
     #Training
-    #train_vocab = build_vocabulary(train_set)
-    #train_vocab_filtered = build_vocabulary(train_set, True)
+    train_vocab = build_vocabulary(train_set)
+    train_vocab_filtered = build_vocabulary(train_set, filter_vocab=True)
 
-    #train_conditionals = calc_conditionals(train_vocab)
-    #train_conditionals_filtered = calc_conditionals(train_vocab_filtered)
+    train_conditionals = calc_conditionals(train_vocab)
+    train_conditionals_filtered = calc_conditionals(train_vocab_filtered)
 
-    #train_priors = calc_priors(train_set)
-    
+    train_priors = calc_priors(train_set)
 
     #Testing
-    #test_vocab = build_vocabulary(test_set)
-    #test_vocab_filtered = build_vocabulary(test_set, True)
+    test_vocab = build_vocabulary(test_set)
+    test_vocab_filtered = build_vocabulary(test_set, filter_vocab=True)
 
 
 if __name__ == "__main__":
