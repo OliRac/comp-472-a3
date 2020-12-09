@@ -93,13 +93,13 @@ def calc_conditionals(vocab, smooth=0.01):
 #Returns the priors for the given dataset and label in log10
 #Label defaults to "q1_label" as per the assignment guidelines
 #Does not handle div by 0 or log(0)
-def calc_priors(dataset, label="q1_label"):
+def calc_priors(dataset, label_name="q1_label", label_value="yes"):
     denominator = len(dataset)
 
     numerator = 0
 
     for row in dataset:
-        if row[label] == "yes":
+        if row[label_name] == label_value:
             numerator += 1
 
     return log10(numerator / denominator)
@@ -109,21 +109,21 @@ def run():
     args = get_args()
 
     train_set = read_data(data_folder / args.train)
-    test_set = read_data(data_folder / args.test, col_names=("tweet_id", "text"))
+    test_set = read_data(data_folder / args.test, col_names=("tweet_id", "text", "q1_label"))
 
     #Training
-    train_vocab = build_vocabulary(train_set)
-    train_vocab_filtered = build_vocabulary(train_set, True)
+    #train_vocab = build_vocabulary(train_set)
+    #train_vocab_filtered = build_vocabulary(train_set, True)
 
-    train_conditionals = calc_conditionals(train_vocab)
-    train_conditionals_filtered = calc_conditionals(train_vocab_filtered)
+    #train_conditionals = calc_conditionals(train_vocab)
+    #train_conditionals_filtered = calc_conditionals(train_vocab_filtered)
 
-    train_priors = calc_priors(train_set)
+    #train_priors = calc_priors(train_set)
     
 
     #Testing
-    test_vocab = build_vocabulary(test_set)
-    test_vocab_filtered = build_vocabulary(test_set, True)
+    #test_vocab = build_vocabulary(test_set)
+    #test_vocab_filtered = build_vocabulary(test_set, True)
 
 
 if __name__ == "__main__":
