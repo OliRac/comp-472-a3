@@ -106,6 +106,16 @@ def calc_priors(dataset, label_value, label_name="q1_label"):
     return log10(numerator / denominator)
 
 
+#Returns scores for each entry in the dataset, for label_value and filtered or not
+def calc_score(dataset, label_value, filtered, smooth = 0.01):
+    vocab =  build_vocabulary(dataset, label_value=label_value, filter_vocab=filtered)
+    conditionals = calc_conditionals(vocab, smooth=smooth)
+    priors = calc_priors(dataset, label_value=label_value)
+
+    #returning empty dict for now, replace with score calculation later
+    return {}
+
+
 def run():
     args = get_args()
 
@@ -113,7 +123,14 @@ def run():
     test_set = read_data(data_folder / args.test, col_names=("tweet_id", "text", "q1_label"))
 
 
-    #Abstract out this part later once its all figured out
+    train_yes_scores = calc_score(train_set, "yes", False)
+    train_no_scores = calc_score(train_set, "no", False)
+
+
+    train_yes_scores_filtered = calc_score(train_set, "yes", True)
+    train_no_scores_filtered = calc_score(train_set, "no", True)
+
+    """#Abstract out this part later once its all figured out
 
 
     #Training yes
@@ -139,17 +156,14 @@ def run():
     #Training no
     train_vocab_no_filtered = build_vocabulary(train_set, label_value="no", filter_vocab=True)
     train_conditionals_no_filtered = calc_conditionals(train_vocab_no_filtered)
-    train_priors_no_filtered = calc_priors(train_set, label_value="no")
-
-
-    #From here, we can add up the score for each tweet
+    train_priors_no_filtered = calc_priors(train_set, label_value="no")"""
 
 
     #Now same thing needs to be done for Testing set
 
     #Testing
-    #test_vocab = build_vocabulary(test_set)
-    #test_vocab_filtered = build_vocabulary(test_set, filter_vocab=True)
+    """#test_vocab = build_vocabulary(test_set)
+    #test_vocab_filtered = build_vocabulary(test_set, filter_vocab=True)"""
 
 
 if __name__ == "__main__":
