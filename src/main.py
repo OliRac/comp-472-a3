@@ -55,7 +55,7 @@ def get_args():
 # Assumes data is a list of dictionaries that containt "text" entry.
 # Vocabulary can be filtered: entries with a frequency less than 2 are removed.
 # No need to clean the words
-def build_vocabulary(data, label_name="q1_label", label_value="yes", filter_vocab=False):
+def build_vocabulary(data, label_value, label_name="q1_label", filter_vocab=False):
     vocab = {}
     
     for row in data:
@@ -94,7 +94,7 @@ def calc_conditionals(vocab, smooth=0.01):
 #Returns the priors for the given dataset and label in log10
 #Label defaults to "q1_label" and label_value to "yes" as per the assignment guidelines
 #Does not handle div by 0 or log(0)
-def calc_priors(dataset, label_name="q1_label", label_value="yes"):
+def calc_priors(dataset, label_value, label_name="q1_label"):
     denominator = len(dataset)
 
     numerator = 0
@@ -112,18 +112,44 @@ def run():
     train_set = read_data(data_folder / args.train)
     test_set = read_data(data_folder / args.test, col_names=("tweet_id", "text", "q1_label"))
 
-    #Training
-    train_vocab = build_vocabulary(train_set)
-    train_vocab_filtered = build_vocabulary(train_set, filter_vocab=True)
 
-    train_conditionals = calc_conditionals(train_vocab)
-    train_conditionals_filtered = calc_conditionals(train_vocab_filtered)
+    #Abstract out this part later once its all figured out
 
-    train_priors = calc_priors(train_set)
+
+    #Training yes
+    train_vocab_yes = build_vocabulary(train_set, label_value="yes")
+    train_conditionals_yes = calc_conditionals(train_vocab_yes)
+    train_priors_yes = calc_priors(train_set, label_value="yes")
+
+
+    #Training no
+    train_vocab_no = build_vocabulary(train_set, label_value="no")
+    train_conditionals_no = calc_conditionals(train_vocab_no)
+    train_priors_no = calc_priors(train_set, label_value="no")
+
+
+
+    #Same thing, Filtered Edition
+    #Training yes
+    train_vocab_yes_filtered = build_vocabulary(train_set, label_value="yes", filter_vocab=True)
+    train_conditionals_yes_filtered = calc_conditionals(train_vocab_yes_filtered)
+    train_priors_yes_filtered = calc_priors(train_set, label_value="yes")
+
+
+    #Training no
+    train_vocab_no_filtered = build_vocabulary(train_set, label_value="no", filter_vocab=True)
+    train_conditionals_no_filtered = calc_conditionals(train_vocab_no_filtered)
+    train_priors_no_filtered = calc_priors(train_set, label_value="no")
+
+
+    #From here, we can add up the score for each tweet
+
+
+    #Now same thing needs to be done for Testing set
 
     #Testing
-    test_vocab = build_vocabulary(test_set)
-    test_vocab_filtered = build_vocabulary(test_set, filter_vocab=True)
+    #test_vocab = build_vocabulary(test_set)
+    #test_vocab_filtered = build_vocabulary(test_set, filter_vocab=True)
 
 
 if __name__ == "__main__":
