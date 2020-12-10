@@ -115,6 +115,92 @@ def calc_score(dataset, label_value, filtered, smooth = 0.01):
     #returning empty dict for now, replace with score calculation later
     return {}
 
+def correct_helper(value1, value2):
+    if value1 == value2:
+        bool_Str ='correct'
+    else:
+        bool_Str ='wrong'
+        
+    return bool_Str
+
+def Naive_Bayes(train_dataset, test_dataset, label_values, filtered, smooth = 0.01):
+    #Binomial Naive Bayes
+    result = {}
+    
+    train_vocab1 =  build_vocabulary(train_dataset, label_value=label_values[0], filter_vocab=filtered)
+    train_conditionals1 = calc_conditionals(train_vocab1)
+    train_priors1 = calc_priors(train_dataset, label_value=label_values[0])
+    
+    train_vocab2 =  build_vocabulary(test_dataset, label_value=label_values[1], filter_vocab=filtered)
+    train_conditionals2 = calc_conditionals(train_vocab2)
+    train_priors2 = calc_priors(test_dataset, label_value=label_values[1])
+    
+    noword_in1 = 0
+    noword_in2 = 0
+    
+    for row in test_dataset:
+        
+        prob1 = 1 #prob needs to start at 1 because of the numerical identities that 1 has over 0
+        prob2 = 1
+        any_1 = 0 #flags to double check if inital probablity of 1 is changed
+        any_2 = 0
+        
+        for word in row["text"].lower().split():
+            try:
+                word_prob1 = train_vocab1[word]/sum(train_vocab1.values()) #prob of word appearing in vocab
+                prob1 = prob1*(train_conditionals1[word]/word_prob1)
+                any_1 = 1
+            except:
+                noword_in1 += 1
+                pass
+            try:       
+                word_prob2 = train_vocab2[word]/sum(train_vocab2.values())
+                prob2 = prob2*(train_conditionals2[word]/word_prob2)
+                any_2 = 1
+            except:
+                noword_in2 += 1
+                pass
+                     
+            
+        if any_1 == 1 and any_2 == 1: #probability sucessfully calculated for both classes
+        
+            prob1 = prob1*train_priors1
+            prob2 = prob1*train_priors2
+            
+            if prob1 > prob2:
+                
+                prob_Str= '{:.1e}'.format(prob1)
+                #print(prob1)
+                eval_label = correct_helper(label_values[0],row["q1_label"])
+                result[row['tweet_id']] = [label_values[0], prob_Str, row["q1_label"],eval_label]
+            
+            else:
+                
+                prob_Str= '{:.1e}'.format(prob2)
+                #print(prob2)
+                eval_label = correct_helper(label_values[1],row["q1_label"])
+                result[row['tweet_id']] = [label_values[1], prob_Str, row["q1_label"]]
+                
+        elif any_1 == 1 and any_2 == 0:
+
+            prob1 = prob1*train_priors1
+            #print(prob1)
+            prob_Str= '{:.1e}'.format(prob1)
+            eval_label = correct_helper(label_values[0],row["q1_label"])
+            result[row['tweet_id']] = [label_values[0], prob_Str, row["q1_label"]]
+            
+        else:
+            
+            prob2 = prob1*train_priors2
+            #print(prob2)
+            prob_Str= '{:.1e}'.format(prob2)
+            eval_label = correct_helper(label_values[1],row["q1_label"])
+            result[row['tweet_id']] = [label_values[1], prob_Str, row["q1_label"]]
+    
+    #print(noword_in1)
+    #print(noword_in2)
+    return result
+            
 
 def run():
     args = get_args()
@@ -122,13 +208,20 @@ def run():
     train_set = read_data(data_folder / args.train)
     test_set = read_data(data_folder / args.test, col_names=("tweet_id", "text", "q1_label"))
 
+    regular_solution = Naive_Bayes(train_set,test_set, ['yes','no'], False)
+    filtered_solution =Naive_Bayes(train_set,test_set, ['yes','no'], True)
+    
+    print('regular')
+    print(regular_solution)
+    print('Filtered')
+    print(filtered_solution)
+    
+    #train_yes_scores = calc_score(train_set, "yes", False)
+    #train_no_scores = calc_score(train_set, "no", False)
 
-    train_yes_scores = calc_score(train_set, "yes", False)
-    train_no_scores = calc_score(train_set, "no", False)
 
-
-    train_yes_scores_filtered = calc_score(train_set, "yes", True)
-    train_no_scores_filtered = calc_score(train_set, "no", True)
+    #train_yes_scores_filtered = calc_score(train_set, "yes", True)
+    #train_no_scores_filtered = calc_score(train_set, "no", True)
 
     """#Abstract out this part later once its all figured out
 
