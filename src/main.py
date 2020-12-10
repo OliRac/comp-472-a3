@@ -128,18 +128,20 @@ def Naive_Bayes(train_dataset, test_dataset, label_values, filtered, smooth = 0.
     #Binomial Naive Bayes
     result = {}
     
+    #get vocab, conditional/likelihood and prior for class 1
     train_vocab1 =  build_vocabulary(train_dataset, label_value=label_values[0], filter_vocab=filtered)
     train_conditionals1 = calc_conditionals(train_vocab1)
     train_priors1 = calc_priors(train_dataset, label_value=label_values[0])
     
-    train_vocab2 =  build_vocabulary(test_dataset, label_value=label_values[1], filter_vocab=filtered)
+    #get vocab, conditional/likelihood and prior for class 2
+    train_vocab2 =  build_vocabulary(train_dataset, label_value=label_values[1], filter_vocab=filtered)
     train_conditionals2 = calc_conditionals(train_vocab2)
-    train_priors2 = calc_priors(test_dataset, label_value=label_values[1])
+    train_priors2 = calc_priors(train_dataset, label_value=label_values[1])
     
     noword_in1 = 0
     noword_in2 = 0
     
-    for row in test_dataset:
+    for row in test_dataset: #iterate though evey tweet
         
         prob1 = 0 #prob needs to start at 1 because of the numerical identities that 1 has over 0
         prob2 = 0
@@ -148,41 +150,40 @@ def Naive_Bayes(train_dataset, test_dataset, label_values, filtered, smooth = 0.
         
         for word in row["text"].lower().split():
             try:
-                #word_prob1 = train_vocab1[word]/sum(train_vocab1.values()) #prob of word appearing in vocab
-                prob1 = prob1+(train_conditionals1[word])
+                prob1 = prob1+(train_conditionals1[word]) #for each word add the probablitity for class 1
                 any_1 = 1
             except:
                 noword_in1 += 1
                 pass
             try:       
-                #word_prob2 = train_vocab2[word]/sum(train_vocab2.values())
-                prob2 = prob2+(train_conditionals2[word])
+                prob2 = prob2+(train_conditionals2[word]) #for each word add the probability for class 2
                 any_2 = 1
             except:
                 noword_in2 += 1
                 pass
                      
-            
-        if any_1 == 1 and any_2 == 1: #probability sucessfully calculated for both classes
+        print('p1: ', prob1, 'p2: ', prob2)
         
+        if any_1 == 1 and any_2 == 1: #probability sucessfully calculated for both classes
+                  
             prob1 = prob1*train_priors1
             prob2 = prob1*train_priors2
             
-            if prob1 > prob2:
+            if prob1 > prob2: #belongs to class 1
                 
                 prob_Str= '{:.1e}'.format(prob1)
                 #print(prob1)
                 eval_label = correct_helper(label_values[0],row["q1_label"])
                 result[row['tweet_id']] = [label_values[0], prob_Str, row["q1_label"],eval_label]
             
-            else:
+            else:   #belongs to class 2
                 
                 prob_Str= '{:.1e}'.format(prob2)
                 print(prob2)
                 eval_label = correct_helper(label_values[1],row["q1_label"])
                 result[row['tweet_id']] = [label_values[1], prob_Str, row["q1_label"]]
                 
-        elif any_1 == 1 and any_2 == 0:
+        elif any_1 == 1 and any_2 == 0: #no words in class 2 so by default put in class 1
 
             prob1 = prob1*train_priors1
             #print(prob1)
@@ -191,6 +192,7 @@ def Naive_Bayes(train_dataset, test_dataset, label_values, filtered, smooth = 0.
             result[row['tweet_id']] = [label_values[0], prob_Str, row["q1_label"]]
             
         else:
+            #no words in class 1 so put in class 2 by default
             
             prob2 = prob1*train_priors2
             print(prob2)
