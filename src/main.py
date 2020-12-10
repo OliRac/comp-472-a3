@@ -141,22 +141,22 @@ def Naive_Bayes(train_dataset, test_dataset, label_values, filtered, smooth = 0.
     
     for row in test_dataset:
         
-        prob1 = 1 #prob needs to start at 1 because of the numerical identities that 1 has over 0
-        prob2 = 1
+        prob1 = 0 #prob needs to start at 1 because of the numerical identities that 1 has over 0
+        prob2 = 0
         any_1 = 0 #flags to double check if inital probablity of 1 is changed
         any_2 = 0
         
         for word in row["text"].lower().split():
             try:
-                word_prob1 = train_vocab1[word]/sum(train_vocab1.values()) #prob of word appearing in vocab
-                prob1 = prob1*(train_conditionals1[word]/word_prob1)
+                #word_prob1 = train_vocab1[word]/sum(train_vocab1.values()) #prob of word appearing in vocab
+                prob1 = prob1+(train_conditionals1[word])
                 any_1 = 1
             except:
                 noword_in1 += 1
                 pass
             try:       
-                word_prob2 = train_vocab2[word]/sum(train_vocab2.values())
-                prob2 = prob2*(train_conditionals2[word]/word_prob2)
+                #word_prob2 = train_vocab2[word]/sum(train_vocab2.values())
+                prob2 = prob2+(train_conditionals2[word])
                 any_2 = 1
             except:
                 noword_in2 += 1
@@ -178,7 +178,7 @@ def Naive_Bayes(train_dataset, test_dataset, label_values, filtered, smooth = 0.
             else:
                 
                 prob_Str= '{:.1e}'.format(prob2)
-                #print(prob2)
+                print(prob2)
                 eval_label = correct_helper(label_values[1],row["q1_label"])
                 result[row['tweet_id']] = [label_values[1], prob_Str, row["q1_label"]]
                 
@@ -193,7 +193,7 @@ def Naive_Bayes(train_dataset, test_dataset, label_values, filtered, smooth = 0.
         else:
             
             prob2 = prob1*train_priors2
-            #print(prob2)
+            print(prob2)
             prob_Str= '{:.1e}'.format(prob2)
             eval_label = correct_helper(label_values[1],row["q1_label"])
             result[row['tweet_id']] = [label_values[1], prob_Str, row["q1_label"]]
@@ -233,11 +233,11 @@ def run():
     
     print('regular')
     print(regular_solution)
-    print('Filtered')
-    print(filtered_solution)
+    #print('Filtered')
+    #print(filtered_solution)
 
-    output("trace_NB-BOW-OV.txt", regular_solution)
-    output("trace_NB-BOW-FV.txt", filtered_solution)
+    #output("trace_NB-BOW-OV.txt", regular_solution)
+    #output("trace_NB-BOW-FV.txt", filtered_solution)
     
     #train_yes_scores = calc_score(train_set, "yes", False)
     #train_no_scores = calc_score(train_set, "no", False)

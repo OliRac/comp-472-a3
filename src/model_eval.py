@@ -52,7 +52,7 @@ def evaluate(file_name,NB_output,class1,class2):
     
     class1_recall = class1_TP/(class1_TP + class1_FN)      #TP/(TP+FN)
     class2_recall = class2_TP/(class2_TP + class2_FN)
-    
+        
     class1_f1 = 2*class1_precision*class1_recall /(class1_precision + class1_recall)
     class2_f1 = 2*class2_precision*class2_recall /(class2_precision + class2_recall)
             
