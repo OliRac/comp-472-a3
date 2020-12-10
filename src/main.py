@@ -13,6 +13,7 @@ from math import log10
 #from sklearn.metrics import ...            #we probably can't import this for A3
 
 data_folder = Path("../data/")
+output_folder = Path("../output/")
 
 #Reads the passed delimieter seperated file to a list of dictionaries with keys as col_names. 
 def read_data(file, delim='\t', col_names=None):
@@ -202,6 +203,25 @@ def Naive_Bayes(train_dataset, test_dataset, label_values, filtered, smooth = 0.
     return result
             
 
+#Outputs the result data dictionary to a file in the output directory. 
+#Uses the following format: tweet_id[space][space]predicted_class[space][space]score[space][space]correct_class[space][space]is_correct
+def output(filename, data_dict):
+    lines = []
+
+    for k, v in data_dict.items():
+        line = k
+
+        for i in v:
+            line += "  " + str(i)
+
+        lines.append(line)
+
+    lines = "\n".join(lines)
+
+    with open(output_folder / filename, 'w') as file:
+        file.writelines(lines)
+
+
 def run():
     args = get_args()
 
@@ -215,6 +235,9 @@ def run():
     print(regular_solution)
     print('Filtered')
     print(filtered_solution)
+
+    output("trace_NB-BOW-OV.txt", regular_solution)
+    output("trace_NB-BOW-FV.txt", filtered_solution)
     
     #train_yes_scores = calc_score(train_set, "yes", False)
     #train_no_scores = calc_score(train_set, "no", False)
