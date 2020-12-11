@@ -10,6 +10,7 @@ from math import log10
 
 #user imports
 from model_eval import evaluate, output_trace
+from sanitizer import sanitize
 
 data_folder = Path("../data/")
 output_folder = Path("../output/")
@@ -160,6 +161,9 @@ def run():
 
     train_set = read_data(data_folder / args.train)
     test_set = read_data(data_folder / args.test, col_names=("tweet_id", "text", "q1_label"))
+
+    train_set = sanitize(train_set)
+    test_set = sanitize(test_set)
 
     regular_solution = Naive_Bayes(train_set,test_set, ['yes','no'], False)
     filtered_solution = Naive_Bayes(train_set,test_set, ['yes','no'], True)
