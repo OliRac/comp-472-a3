@@ -8,12 +8,12 @@ import string
 from pathlib import Path
 from math import log10
 
-#external dependencies
-#import numpy as np
-#from sklearn.metrics import ...            #we probably can't import this for A3
+#user imports
+from model_eval import evaluate, output_trace
 
 data_folder = Path("../data/")
 output_folder = Path("../output/")
+
 
 #Reads the passed delimieter seperated file to a list of dictionaries with keys as col_names. 
 def read_data(file, delim='\t', col_names=None):
@@ -26,15 +26,6 @@ def read_data(file, delim='\t', col_names=None):
             result.append(row)
 
     return result
-
-#numpy really doesnt like the tsv files we have :(
-#it's not using the delimiter properly even though it is clearly defined
-#might be due to bad characters in the files? checking them out in notepad++ with utf-8 shows some bizarre things
-#I guess I'll stick to default csv library
-#def read_training_np(file):
-#    data = np.genfromtxt(file, dtype=None, delimiter="\t", encoding='utf8', names=True)
-
-#    return data
 
 
 
@@ -116,6 +107,8 @@ def calc_score(dataset, label_value, filtered, smooth = 0.01):
     #returning empty dict for now, replace with score calculation later
     return {}
 
+
+
 def correct_helper(value1, value2):
     if value1 == value2:
         bool_Str ='correct'
@@ -123,6 +116,8 @@ def correct_helper(value1, value2):
         bool_Str ='wrong'
         
     return bool_Str
+
+
 
 def Naive_Bayes(train_dataset, test_dataset, label_values, filtered, smooth = 0.01):
     #Binomial Naive Bayes
@@ -132,94 +127,62 @@ def Naive_Bayes(train_dataset, test_dataset, label_values, filtered, smooth = 0.
     train_conditionals1 = calc_conditionals(train_vocab1)
     train_priors1 = calc_priors(train_dataset, label_value=label_values[0])
     
-    train_vocab2 =  build_vocabulary(test_dataset, label_value=label_values[1], filter_vocab=filtered)
+    train_vocab2 =  build_vocabulary(train_dataset, label_value=label_values[1], filter_vocab=filtered)
     train_conditionals2 = calc_conditionals(train_vocab2)
-    train_priors2 = calc_priors(test_dataset, label_value=label_values[1])
+    train_priors2 = calc_priors(train_dataset, label_value=label_values[1])
     
     noword_in1 = 0
     noword_in2 = 0
     
     for row in test_dataset:
         
-        prob1 = 1 #prob needs to start at 1 because of the numerical identities that 1 has over 0
-        prob2 = 1
+        #tweet score = prior + condi1 + condi2 + ... + condiN
+        prob1 = train_priors1 
+        prob2 = train_priors2
         any_1 = 0 #flags to double check if inital probablity of 1 is changed
         any_2 = 0
         
         for word in row["text"].lower().split():
             try:
-                word_prob1 = train_vocab1[word]/sum(train_vocab1.values()) #prob of word appearing in vocab
-                prob1 = prob1*(train_conditionals1[word]/word_prob1)
+                prob1 += train_conditionals1[word]
                 any_1 = 1
             except:
                 noword_in1 += 1
-                pass
+
             try:       
-                word_prob2 = train_vocab2[word]/sum(train_vocab2.values())
-                prob2 = prob2*(train_conditionals2[word]/word_prob2)
+                prob2 += train_conditionals2[word]
                 any_2 = 1
             except:
                 noword_in2 += 1
-                pass
-                     
-            
-        if any_1 == 1 and any_2 == 1: #probability sucessfully calculated for both classes
-        
-            prob1 = prob1*train_priors1
-            prob2 = prob1*train_priors2
-            
-            if prob1 > prob2:
-                
+
+        #formatting the return dictionary    
+        if any_1 == 1 and any_2 == 1: #probability sucessfully calculated for both classes 
+            if prob1 > prob2:              
                 prob_Str= '{:.1e}'.format(prob1)
                 #print(prob1)
                 eval_label = correct_helper(label_values[0],row["q1_label"])
                 result[row['tweet_id']] = [label_values[0], prob_Str, row["q1_label"],eval_label]
             
-            else:
-                
+            else:     
                 prob_Str= '{:.1e}'.format(prob2)
                 #print(prob2)
                 eval_label = correct_helper(label_values[1],row["q1_label"])
-                result[row['tweet_id']] = [label_values[1], prob_Str, row["q1_label"]]
+                result[row['tweet_id']] = [label_values[1], prob_Str, row["q1_label"],eval_label]
                 
         elif any_1 == 1 and any_2 == 0:
-
-            prob1 = prob1*train_priors1
             #print(prob1)
             prob_Str= '{:.1e}'.format(prob1)
             eval_label = correct_helper(label_values[0],row["q1_label"])
-            result[row['tweet_id']] = [label_values[0], prob_Str, row["q1_label"]]
+            result[row['tweet_id']] = [label_values[0], prob_Str, row["q1_label"],eval_label]
             
         else:
-            
-            prob2 = prob1*train_priors2
-            #print(prob2)
+            print(prob2)
             prob_Str= '{:.1e}'.format(prob2)
             eval_label = correct_helper(label_values[1],row["q1_label"])
-            result[row['tweet_id']] = [label_values[1], prob_Str, row["q1_label"]]
-    
-    #print(noword_in1)
-    #print(noword_in2)
+            result[row['tweet_id']] = [label_values[1], prob_Str, row["q1_label"],eval_label]
+
+
     return result
-            
-
-#Outputs the result data dictionary to a file in the output directory. 
-#Uses the following format: tweet_id[space][space]predicted_class[space][space]score[space][space]correct_class[space][space]is_correct
-def output(filename, data_dict):
-    lines = []
-
-    for k, v in data_dict.items():
-        line = k
-
-        for i in v:
-            line += "  " + str(i)
-
-        lines.append(line)
-
-    lines = "\n".join(lines)
-
-    with open(output_folder / filename, 'w') as file:
-        file.writelines(lines)
 
 
 def run():
@@ -229,57 +192,19 @@ def run():
     test_set = read_data(data_folder / args.test, col_names=("tweet_id", "text", "q1_label"))
 
     regular_solution = Naive_Bayes(train_set,test_set, ['yes','no'], False)
-    filtered_solution =Naive_Bayes(train_set,test_set, ['yes','no'], True)
+    filtered_solution = Naive_Bayes(train_set,test_set, ['yes','no'], True)
     
-    print('regular')
-    print(regular_solution)
-    print('Filtered')
-    print(filtered_solution)
+    #print('regular')
+    #print(regular_solution)
+    #print('Filtered')
+    #print(filtered_solution)
 
-    output("trace_NB-BOW-OV.txt", regular_solution)
-    output("trace_NB-BOW-FV.txt", filtered_solution)
+    output_trace(output_folder / "trace_NB-BOW-OV.txt", regular_solution)
+    output_trace(output_folder / "trace_NB-BOW-FV.txt", filtered_solution)
     
-    #train_yes_scores = calc_score(train_set, "yes", False)
-    #train_no_scores = calc_score(train_set, "no", False)
+    evaluate(output_folder / "eval_NB-BOW-OV.txt", regular_solution, "yes", "no")
+    evaluate(output_folder / "eval_NB-BOW-FV.txt", filtered_solution, "yes", "no")
 
-
-    #train_yes_scores_filtered = calc_score(train_set, "yes", True)
-    #train_no_scores_filtered = calc_score(train_set, "no", True)
-
-    """#Abstract out this part later once its all figured out
-
-
-    #Training yes
-    train_vocab_yes = build_vocabulary(train_set, label_value="yes")
-    train_conditionals_yes = calc_conditionals(train_vocab_yes)
-    train_priors_yes = calc_priors(train_set, label_value="yes")
-
-
-    #Training no
-    train_vocab_no = build_vocabulary(train_set, label_value="no")
-    train_conditionals_no = calc_conditionals(train_vocab_no)
-    train_priors_no = calc_priors(train_set, label_value="no")
-
-
-
-    #Same thing, Filtered Edition
-    #Training yes
-    train_vocab_yes_filtered = build_vocabulary(train_set, label_value="yes", filter_vocab=True)
-    train_conditionals_yes_filtered = calc_conditionals(train_vocab_yes_filtered)
-    train_priors_yes_filtered = calc_priors(train_set, label_value="yes")
-
-
-    #Training no
-    train_vocab_no_filtered = build_vocabulary(train_set, label_value="no", filter_vocab=True)
-    train_conditionals_no_filtered = calc_conditionals(train_vocab_no_filtered)
-    train_priors_no_filtered = calc_priors(train_set, label_value="no")"""
-
-
-    #Now same thing needs to be done for Testing set
-
-    #Testing
-    """#test_vocab = build_vocabulary(test_set)
-    #test_vocab_filtered = build_vocabulary(test_set, filter_vocab=True)"""
 
 
 if __name__ == "__main__":
