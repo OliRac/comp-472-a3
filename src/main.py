@@ -162,9 +162,6 @@ def run():
     train_set = read_data(data_folder / args.train)
     test_set = read_data(data_folder / args.test, col_names=("tweet_id", "text", "q1_label"))
 
-    train_set = sanitize(train_set)
-    test_set = sanitize(test_set)
-
     regular_solution = Naive_Bayes(train_set,test_set, ['yes','no'], False)
     filtered_solution = Naive_Bayes(train_set,test_set, ['yes','no'], True)
 
@@ -174,6 +171,19 @@ def run():
     evaluate(output_folder / "eval_NB-BOW-OV.txt", regular_solution, "yes", "no")
     evaluate(output_folder / "eval_NB-BOW-FV.txt", filtered_solution, "yes", "no")
 
+
+    #using sanitized input
+    train_set_cleaned = sanitize(train_set)
+    test_set_cleaned = sanitize(test_set)
+
+    regular_solution = Naive_Bayes(train_set_cleaned,test_set_cleaned, ['yes','no'], False)
+    filtered_solution = Naive_Bayes(train_set_cleaned,test_set_cleaned, ['yes','no'], True)
+
+    output_trace(output_folder / "trace_NB-BOW-OV_clean.txt", regular_solution)
+    output_trace(output_folder / "trace_NB-BOW-FV_clean.txt", filtered_solution)
+    
+    evaluate(output_folder / "eval_NB-BOW-OV_clean.txt", regular_solution, "yes", "no")
+    evaluate(output_folder / "eval_NB-BOW-FV_clean.txt", filtered_solution, "yes", "no")
 
 
 if __name__ == "__main__":
