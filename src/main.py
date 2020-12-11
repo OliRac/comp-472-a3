@@ -28,7 +28,6 @@ def read_data(file, delim='\t', col_names=None):
     return result
 
 
-
 #Sets and retrieves the command line arguments
 #Current arguments:
     #training data file, default "covid_training.tsv"
@@ -98,17 +97,6 @@ def calc_priors(dataset, label_value, label_name="q1_label"):
     return log10(numerator / denominator)
 
 
-#Returns scores for each entry in the dataset, for label_value and filtered or not
-def calc_score(dataset, label_value, filtered, smooth = 0.01):
-    vocab =  build_vocabulary(dataset, label_value=label_value, filter_vocab=filtered)
-    conditionals = calc_conditionals(vocab, smooth=smooth)
-    priors = calc_priors(dataset, label_value=label_value)
-
-    #returning empty dict for now, replace with score calculation later
-    return {}
-
-
-
 def correct_helper(value1, value2):
     if value1 == value2:
         bool_Str ='correct'
@@ -118,7 +106,10 @@ def correct_helper(value1, value2):
     return bool_Str
 
 
-
+#Our Naive Bayes implementation
+#Builds vocabulary, conditionals and priors for each label with the training set
+#Then uses these values to calculate the scores for each test set tweet.
+#NOTE: Words that are not found in the vocabulary are ignored
 def Naive_Bayes(train_dataset, test_dataset, label_values, filtered, smooth = 0.01):
     #Binomial Naive Bayes
     result = {}
@@ -130,61 +121,40 @@ def Naive_Bayes(train_dataset, test_dataset, label_values, filtered, smooth = 0.
     train_vocab2 =  build_vocabulary(train_dataset, label_value=label_values[1], filter_vocab=filtered)
     train_conditionals2 = calc_conditionals(train_vocab2)
     train_priors2 = calc_priors(train_dataset, label_value=label_values[1])
+
     
-    noword_in1 = 0
-    noword_in2 = 0
-    
-    for row in test_dataset:
-        
+    for row in test_dataset: 
         #tweet score = prior + condi1 + condi2 + ... + condiN
         prob1 = train_priors1 
         prob2 = train_priors2
-        any_1 = 0 #flags to double check if inital probablity of 1 is changed
-        any_2 = 0
         
         for word in row["text"].lower().split():
             try:
                 prob1 += train_conditionals1[word]
-                any_1 = 1
             except:
-                noword_in1 += 1
+                pass
 
             try:       
                 prob2 += train_conditionals2[word]
-                any_2 = 1
             except:
-                noword_in2 += 1
+                pass
 
         #formatting the return dictionary    
-        if any_1 == 1 and any_2 == 1: #probability sucessfully calculated for both classes 
-            if prob1 > prob2:              
-                prob_Str= '{:.1e}'.format(prob1)
-                #print(prob1)
-                eval_label = correct_helper(label_values[0],row["q1_label"])
-                result[row['tweet_id']] = [label_values[0], prob_Str, row["q1_label"],eval_label]
-            
-            else:     
-                prob_Str= '{:.1e}'.format(prob2)
-                #print(prob2)
-                eval_label = correct_helper(label_values[1],row["q1_label"])
-                result[row['tweet_id']] = [label_values[1], prob_Str, row["q1_label"],eval_label]
-                
-        elif any_1 == 1 and any_2 == 0:
-            #print(prob1)
+        if prob1 > prob2:              
             prob_Str= '{:.1e}'.format(prob1)
             eval_label = correct_helper(label_values[0],row["q1_label"])
-            result[row['tweet_id']] = [label_values[0], prob_Str, row["q1_label"],eval_label]
-            
-        else:
-            print(prob2)
+            result[row['tweet_id']] = [label_values[0], prob_Str, row["q1_label"],eval_label]  
+        else:     
             prob_Str= '{:.1e}'.format(prob2)
             eval_label = correct_helper(label_values[1],row["q1_label"])
             result[row['tweet_id']] = [label_values[1], prob_Str, row["q1_label"],eval_label]
 
-
     return result
 
 
+#Reads data from training set and test set
+#Runs naive bayes on both, unfiltered and filtered
+#Outputs trace and evaluation files
 def run():
     args = get_args()
 
@@ -193,11 +163,6 @@ def run():
 
     regular_solution = Naive_Bayes(train_set,test_set, ['yes','no'], False)
     filtered_solution = Naive_Bayes(train_set,test_set, ['yes','no'], True)
-    
-    #print('regular')
-    #print(regular_solution)
-    #print('Filtered')
-    #print(filtered_solution)
 
     output_trace(output_folder / "trace_NB-BOW-OV.txt", regular_solution)
     output_trace(output_folder / "trace_NB-BOW-FV.txt", filtered_solution)
