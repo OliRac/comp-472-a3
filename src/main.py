@@ -182,17 +182,12 @@ def run():
 
 
     #using sanitized input
-    train_set_cleaned = sanitize(train_set)
-    test_set_cleaned = sanitize(test_set)
+    train_set_sanitized = sanitize(train_set)
+    test_set_sanitized = sanitize(test_set)
 
-    regular_solution = Naive_Bayes(train_set_cleaned,test_set_cleaned, ['yes','no'], False)
-    filtered_solution = Naive_Bayes(train_set_cleaned,test_set_cleaned, ['yes','no'], True)
-
-    output_trace(output_folder / "trace_NB-BOW-OV_sanitized.txt", regular_solution)
-    output_trace(output_folder / "trace_NB-BOW-FV_sanitized.txt", filtered_solution)
-    
-    evaluate(output_folder / "eval_NB-BOW-OV_sanitized.txt", regular_solution, "yes", "no")
-    evaluate(output_folder / "eval_NB-BOW-FV_sanitized.txt", filtered_solution, "yes", "no")
+    sanitized_solution = Naive_Bayes(train_set_sanitized, test_set_sanitized, ['yes','no'], False)
+    output_trace(output_folder / "trace_NB-BOW-OV_sanitized.txt", sanitized_solution)   
+    evaluate(output_folder / "eval_NB-BOW-OV_sanitized.txt", sanitized_solution, "yes", "no")
 
 
 if __name__ == "__main__":
