@@ -10,6 +10,7 @@ from math import log10
 
 #user imports
 from model_eval import evaluate, output_trace
+from sanitizer import sanitize
 
 data_folder = Path("../data/")
 output_folder = Path("../output/")
@@ -179,6 +180,14 @@ def run():
     evaluate(output_folder / "eval_NB-BOW-OV.txt", regular_solution, "yes", "no")
     evaluate(output_folder / "eval_NB-BOW-FV.txt", filtered_solution, "yes", "no")
 
+
+    #using sanitized input
+    train_set_sanitized = sanitize(train_set)
+    test_set_sanitized = sanitize(test_set)
+
+    sanitized_solution = Naive_Bayes(train_set_sanitized, test_set_sanitized, ['yes','no'], False)
+    output_trace(output_folder / "trace_NB-BOW-OV_sanitized.txt", sanitized_solution)   
+    evaluate(output_folder / "eval_NB-BOW-OV_sanitized.txt", sanitized_solution, "yes", "no")
 
 
 if __name__ == "__main__":
