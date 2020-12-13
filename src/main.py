@@ -47,23 +47,29 @@ def get_args():
 # Assumes data is a list of dictionaries that containt "text" entry.
 # Vocabulary can be filtered: entries with a frequency less than 2 are removed.
 # No need to clean the words
-def build_vocabulary(data, label_value, label_name="q1_label", filter_vocab=False):
+def build_vocabulary(data, label_name="q1_label", filter_vocab=False):
     vocab = {}
-    
+
     for row in data:
-        if row[label_name] == label_value:
-            for word in row["text"].lower().split():
-                if word not in vocab:
-                    vocab.update({word:1})
-                else:
-                    vocab[word] += 1
+        for word in row["text"].lower().split():
+            if row[label_name] == "yes":
+                label_value = "yes"
+            else:
+                label_value = "no"
+
+            if word not in vocab:
+                vocab.update({
+                    word: {"yes": 0, "no": 0}
+                })
+            
+            vocab[word][label_value] += 1
 
     if filter_vocab:
         filtered_vocab = {}
 
         for word in vocab:
-            if vocab[word] >= 2:
-                filtered_vocab.update({word:vocab[word]})
+            if vocab[word]["yes"] + vocab[word]["no"] >= 2:
+                filtered_vocab[word] = vocab[word]
 
         vocab = filtered_vocab
 
@@ -72,13 +78,16 @@ def build_vocabulary(data, label_value, label_name="q1_label", filter_vocab=Fals
 
 #Returns the conditional in log10, p(x) = (count(x) + smooth) /  (count(all words) + size_of_vocab*smooth)
 #Assumes vocab contains the frequency of each word
-def calc_conditionals(vocab, smooth=0.01):
+def calc_conditionals(vocab, label_value, smooth=0.01):
     condi = dict.fromkeys(vocab.keys())
 
-    word_count = sum(vocab.values())
+    word_count = 0  
+
+    for word in vocab:
+        word_count += vocab[word][label_value]
 
     for word in condi:
-        condi[word] = log10((vocab[word] + smooth) / (word_count + len(vocab)*smooth))
+        condi[word] = log10((vocab[word][label_value] + smooth) / (word_count + len(vocab)*smooth))
 
     return condi
 
@@ -115,12 +124,12 @@ def Naive_Bayes(train_dataset, test_dataset, label_values, filtered, smooth = 0.
     #Binomial Naive Bayes
     result = {}
     
-    train_vocab1 =  build_vocabulary(train_dataset, label_value=label_values[0], filter_vocab=filtered)
-    train_conditionals1 = calc_conditionals(train_vocab1)
+    train_vocab =  build_vocabulary(train_dataset, filter_vocab=filtered)
+
+    train_conditionals1 = calc_conditionals(train_vocab, label_values[0])
     train_priors1 = calc_priors(train_dataset, label_value=label_values[0])
     
-    train_vocab2 =  build_vocabulary(train_dataset, label_value=label_values[1], filter_vocab=filtered)
-    train_conditionals2 = calc_conditionals(train_vocab2)
+    train_conditionals2 = calc_conditionals(train_vocab, label_values[1])
     train_priors2 = calc_priors(train_dataset, label_value=label_values[1])
 
     
