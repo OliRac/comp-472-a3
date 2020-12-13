@@ -1,6 +1,8 @@
 # comp-472-a3
- Artificial Intelligence Assignment 3: Language Processing
+ Artificial Intelligence Assignment 3: Language Processing <br/>
 Olivier Racette & Ihsaan Malek
+
+https://github.com/OliRac/comp-472-a3
 
 ## Running:
 Default arguments set the training data file to "covid_training.tsv" <br />
