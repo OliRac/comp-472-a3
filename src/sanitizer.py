@@ -6,7 +6,7 @@ def sanitize(dataset):
 
     for row in dataset:
         #Method of removing emojis: turn into ascii, ignore anything not ascii, and decode once again.
-        cleaned = row["text"].lower().encode('ascii', 'ignore').decode('ascii')
+        cleaned = row["text"].encode('ascii', 'ignore').decode('ascii')
 
         #some tweets have "&amp" at random spots
         cleaned = re.sub("&amp", "", cleaned)
