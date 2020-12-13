@@ -188,11 +188,11 @@ def run():
     regular_solution = Naive_Bayes(train_set_cleaned,test_set_cleaned, ['yes','no'], False)
     filtered_solution = Naive_Bayes(train_set_cleaned,test_set_cleaned, ['yes','no'], True)
 
-    output_trace(output_folder / "trace_NB-BOW-OV_clean.txt", regular_solution)
-    output_trace(output_folder / "trace_NB-BOW-FV_clean.txt", filtered_solution)
+    output_trace(output_folder / "trace_NB-BOW-OV_sanitized.txt", regular_solution)
+    output_trace(output_folder / "trace_NB-BOW-FV_sanitized.txt", filtered_solution)
     
-    evaluate(output_folder / "eval_NB-BOW-OV_clean.txt", regular_solution, "yes", "no")
-    evaluate(output_folder / "eval_NB-BOW-FV_clean.txt", filtered_solution, "yes", "no")
+    evaluate(output_folder / "eval_NB-BOW-OV_sanitized.txt", regular_solution, "yes", "no")
+    evaluate(output_folder / "eval_NB-BOW-FV_sanitized.txt", filtered_solution, "yes", "no")
 
 
 if __name__ == "__main__":
